@@ -1,79 +1,157 @@
-# Dashboard Pangan Nasional 📊
+# 🇮🇩 Indonesia Food Price Intelligence (Big Data Dashboard)
 
-Dashboard ini adalah aplikasi berbasis web yang dibangun menggunakan **Streamlit** untuk memantau dan memprediksi harga pangan nasional, serta menganalisis isu-isu terkait pangan melalui berita online.
+![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
+![Data Science](https://img.shields.io/badge/Data%20Science-Linear%20Regression-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 
-## Fitur Utama
+> **Sistem Monitoring & Peringatan Dini Stabilitas Harga Pangan Nasional Berbasis Big Data & Machine Learning.**
 
-Aplikasi ini mengintegrasikan **Big Data Pemerintah (PIHPS)** dan **Berita Online** untuk:
+---
 
-1.  **Beranda (Monitoring Data)**:
-    *   Menampilkan ringkasan data harga pangan dari sumber internal (pemerintah).
-    *   Menampilkan ringkasan data berita eksternal.
-    
-2.  **Prediksi Harga (Machine Learning)**:
-    *   Menggunakan algoritma **Linear Regression**.
-    *   Memprediksi tren harga komoditas pangan untuk 30 hari ke depan.
-    *   Visualisasi perbandingan data historis dan hasil prediksi.
+## 📸 Preview Dashboard
 
-3.  **Analisis Isu (Social Network Analysis)**:
-    *   Memetakan hubungan antar kata kunci (Co-occurrence Network) dari judul berita.
-    *   Visualisasi graf jaringan isu pangan yang sedang tren.
+<div align="center">
+  <img <img width="1917" height="912" alt="dashboard" src="https://github.com/user-attachments/assets/97cbae93-1976-484a-9c5f-7e145222473b" alt="Dashboard Preview" width="100%" />
+</div>
 
-## Teknologi yang Digunakan
+---
 
-*   **Python 3**
-*   **Streamlit**: Framework untuk membuat dashboard web interaktif.
-*   **Pandas & NumPy**: Manipulasi dan analisis data.
-*   **Scikit-Learn**: Pembuatan model Machine Learning (Linear Regression).
-*   **NetworkX**: Analisis jaringan (Social Network Analysis).
-*   **Matplotlib**: Visualisasi data dan grafik.
-*   **GoogleNews**: (Dependencies) Pengambilan data berita.
+## 📖 Tentang Proyek
 
-## Struktur Folder
+Proyek ini dikembangkan sebagai **Tugas Besar Mata Kuliah Big Data Analisis**. Aplikasi ini bertujuan untuk memecahkan masalah asimetri informasi di pasar pangan dengan menggabungkan data statistik pemerintah dan sentimen publik.
+
+Menggunakan pendekatan **Big Data 4V** (Volume, Variety, Velocity, Veracity), sistem ini mengintegrasikan:
+1.  **Data Terstruktur:** Harga harian komoditas (Beras, Cabai, Bawang) dari *PIHPS Nasional*.
+2.  **Data Tidak Terstruktur:** Ribuan judul berita online yang di-scraping secara *real-time*.
+
+### 🌟 Fitur Unggulan
+| Fitur | Deskripsi Teknologi |
+| :--- | :--- |
+| **📈 Prediksi Harga (AI)** | Forecasting harga 30 hari ke depan menggunakan **Linear Regression**. |
+| **🕸️ Analisis Isu (SNA)** | Memetakan *Keyword Co-occurrence* untuk mendeteksi penyebab kenaikan harga (e.g., "Gagal Panen", "Impor"). |
+| **🗺️ Peta Geospasial** | Visualisasi sebaran harga komoditas di berbagai provinsi di Indonesia. |
+| **🔄 Integrasi Data** | Pipeline otomatis pembersihan data (Cleaning & Preprocessing). |
+
+---
+
+## 🏗️ Arsitektur Sistem
+
+Alur kerja data dari sumber mentah hingga menjadi visualisasi dashboard:
+
+```mermaid
+graph LR
+    A[📡 Sumber Data] -->|Scraping| B(Google News)
+    A -->|Download| C(PIHPS / BPS Excel)
+    B --> D{Data Processing}
+    C --> D
+    D -->|Cleaning & Merging| E[Dataset Bersih]
+    E --> F[🤖 Machine Learning Model]
+    E --> G[🕸️ SNA Engine]
+    F --> H((Streamlit Dashboard))
+    G --> H
 
 ```
-.
-├── app.py                # File utama aplikasi Streamlit
-├── requirements.txt      # Daftar dependensi library
-├── data/                 # Folder penyimpanan data (csv, dll)
-│   └── processed/        # Data yang sudah dibersihkan (data_bersih.csv, data_berita_eksternal.csv)
-├── models/               # Penyimpanan model ML (jika ada)
-└── notebooks/            # Jupyter Notebooks untuk cleaning/scraping/analisis awal
-```
 
-## Cara Menjalankan
+---
 
-Ikuti langkah-langkah berikut untuk menjalankan aplikasi di komputer lokal Anda:
+## 🛠️ Tech Stack
 
-### 1. Prasyarat
-Pastikan Anda sudah menginstall Python di komputer Anda.
+Project ini dibangun menggunakan ekosistem Python yang robust:
 
-### 2. Instalasi Dependensi
-Disarankan untuk menggunakan *Virtual Environment*.
+* **Core:** `Python 3.9+`
+* **Web Framework:** `Streamlit` (UI/UX Interaktif)
+* **Data Manipulation:** `Pandas`, `NumPy`
+* **Machine Learning:** `Scikit-Learn` (Linear Regression)
+* **Social Network Analysis:** `NetworkX`, `Matplotlib`
+* **Data Ingestion:** `GoogleNews` (Web Scraping)
+
+---
+
+## 🚀 Cara Menjalankan (Installation)
+
+Ingin mencoba menjalankannya di komputer lokal Anda? Ikuti langkah mudah ini:
+
+### 1. Clone Repository
 
 ```bash
-# (Opsional) Buat virtual environment
-python -m venv venv
+git clone https://github.com/MuhammadPrayoga/indonesia-food-price-prediction.git
+cd indonesia-food-price-prediction
 
-# Aktifkan virtual environment
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-
-# Install library yang dibutuhkan
-pip install -r requirements.txt
 ```
 
-### 3. Menjalankan Aplikasi
+### 2. Setup Environment
 
-Jalankan perintah berikut di terminal:
+Disarankan menggunakan virtual environment:
+
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Mac/Linux
+python3 -m venv venv
+source venv/bin/activate
+
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+
+```
+
+### 4. Jalankan Aplikasi
 
 ```bash
 streamlit run app.py
+
 ```
 
-Aplikasi akan otomatis terbuka di browser pada alamat `http://localhost:8501`.
+Buka browser dan akses: `http://localhost:8501`
 
-## Catatan
-Pastikan file data (`data/processed/data_bersih.csv` dan `data/processed/data_berita_eksternal.csv`) tersedia agar dashboard dapat menampilkan informasi dengan benar. Jika tidak, jalankan notebook yang relevan di folder `notebooks/` terlebih dahulu.
+---
+
+## 📂 Struktur Direktori
+
+```text
+📦 indonesia-food-price-prediction
+ ┣ 📂 data
+ ┃ ┣ 📂 raw             # Data mentah (Excel/CSV asli)
+ ┃ ┗ 📂 processed       # Data bersih hasil cleaning
+ ┣ 📂 notebooks         # Dapur Analisis (Jupyter Notebook)
+ ┃ ┣ 📜 1_cleaning.ipynb
+ ┃ ┣ 📜 2_modeling.ipynb
+ ┃ ┗ 📜 3_sna_analysis.ipynb
+ ┣ 📜 app.py            # Main Application (Streamlit)
+ ┣ 📜 requirements.txt  # Daftar Library
+ ┗ 📜 README.md         # Dokumentasi ini
+
+```
+
+---
+
+## 📊 Hasil Analisis (Insights)
+
+Berdasarkan pengujian model:
+
+* **Tren Harga:** Algoritma Linear Regression mampu membaca pola musiman harga Cabai dengan cukup baik.
+* **Isu Pasar:** Melalui SNA, ditemukan bahwa kata kunci **"Operasi Pasar"** dan **"Stok Menipis"** memiliki *degree centrality* tertinggi, mengindikasikan korelasi kuat dengan lonjakan harga.
+
+---
+
+## 🤝 Kontribusi & Author
+
+Project ini dibuat oleh:
+**Alfian Nur Rizki**
+**Agus Setiawan**
+**Muhammad Prayoga**
+Mahasiswa Teknik Informatika - Universitas Pelita Bangsa
+---
+
+*Disclaimer: Data yang digunakan bertujuan untuk keperluan akademis dan simulasi sistem Big Data.*
+
+```
+
+```
