@@ -11,8 +11,13 @@
 
 ## 📸 Preview Dashboard
 
-<div align="center">
-  <img <img width="1917" height="912" alt="dashboard" src="https://github.com/user-attachments/assets/97cbae93-1976-484a-9c5f-7e145222473b" alt="Dashboard Preview" width="100%" />
+### 1. Halaman Utama
+![Dashboard Utama](assets/dashboard_utama.png)
+
+### 2. Hasil Prediksi & SNA
+<div style="display: flex; gap: 10px;">
+  <img src="assets/grafik_prediksi.png" width="48%" />
+  <img src="assets/analisis_sna.png" width="48%" />
 </div>
 
 ---
