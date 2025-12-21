@@ -142,21 +142,18 @@ Buka browser dan akses: `http://localhost:8501`
 Berdasarkan pengujian model:
 
 * **Tren Harga:** Algoritma Linear Regression mampu membaca pola musiman harga Cabai dengan cukup baik.
-* **Isu Pasar:** Melalui SNA, ditemukan bahwa kata kunci **"Operasi Pasar"** dan **"Stok Menipis"** memiliki *degree centrality* tertinggi, mengindikasikan korelasi kuat dengan lonjakan harga.
+* **Isu Pasar:** Melalui SNA, ditemukan bahwa kata kunci **"Harga"** dan **"Naik"** memiliki *degree centrality* tertinggi, mengindikasikan korelasi kuat dengan lonjakan harga.
 
 ---
 
 ## 🤝 Kontribusi & Author
 
-Project ini dibuat oleh:
-**Alfian Nur Rizki**
-**Agus Setiawan**
-**Muhammad Prayoga**
-Mahasiswa Teknik Informatika - Universitas Pelita Bangsa
+Project ini dibuat dengan kolaborasi tim mahasiswa **Universitas Pelita Bangsa - Teknik Informatika**:
+
+* 👨‍💻 **Alfian Nur Rizki**
+* 👨‍💻 **Agus Setiawan**
+* 👨‍💻 **Muhammad Prayoga**
+
 ---
 
 *Disclaimer: Data yang digunakan bertujuan untuk keperluan akademis dan simulasi sistem Big Data.*
-
-```
-
-```
