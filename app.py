@@ -7,6 +7,14 @@ import datetime as dt
 import plotly.express as px
 import plotly.graph_objects as go
 from collections import Counter
+import matplotlib.pyplot as plt
+
+# Try importing WordCloud (Optional dependency handling)
+try:
+    from wordcloud import WordCloud
+    WORDCLOUD_AVAILABLE = True
+except ImportError:
+    WORDCLOUD_AVAILABLE = False
 
 # --- IMPORT OPTIONAL MODULES ---
 try:
@@ -132,7 +140,7 @@ if menu == "🏠 Beranda":
     with t2: st.dataframe(df_berita_internal, use_container_width=True, height=300)
 
 # ==============================================================================
-# MENU 2: PREDIKSI HARGA (ML - Plotly Interactive)
+# MENU 2: PREDIKSI HARGA (ML - UPGRADED)
 # ==============================================================================
 elif menu == "📈 Prediksi Harga (ML)":
     render_header()
@@ -146,7 +154,7 @@ elif menu == "📈 Prediksi Harga (ML)":
             
         df_ml = df_harga_internal[df_harga_internal['Item'] == item_ml].copy()
         
-        # Linear Regression
+        # Linear Regression Logic
         df_ml['Date_Ordinal'] = df_ml['Tanggal'].map(dt.datetime.toordinal)
         X = df_ml[['Date_Ordinal']]
         y = df_ml['Harga']
@@ -160,23 +168,74 @@ elif menu == "📈 Prediksi Harga (ML)":
         pred_price = model.predict(future_dates_ord)
         future_dates_real = [dt.date.fromordinal(int(x)) for x in future_dates_ord.flatten()]
         
-        # Plotly Chart
+        # --- 1. SMART INSIGHT (TOP) ---
+        last_actual_price = df_ml['Harga'].iloc[-1]
+        last_predicted_price = pred_price[-1]
+        change_val = last_predicted_price - last_actual_price
+        change_pct = (change_val / last_actual_price) * 100
+        
+        if change_val > 0:
+            st.error(f"⚠️ **Insight:** Harga diprediksi **NAIK** sebesar **{change_pct:.2f}%** (Rp {change_val:,.0f}) dalam 30 hari ke depan.")
+        else:
+            st.success(f"✅ **Insight:** Harga diprediksi **TURUN** sebesar **{abs(change_pct):.2f}%** (Rp {abs(change_val):,.0f}) dalam 30 hari ke depan.")
+            
+        # --- 2. INTERACTIVE CHART (MIDDLE) ---
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df_ml['Tanggal'], y=df_ml['Harga'], mode='lines+markers', name='Data Aktual', line=dict(color='blue')))
-        fig.add_trace(go.Scatter(x=future_dates_real, y=pred_price, mode='lines+markers', name='Prediksi (AI)', line=dict(color='red', dash='dash')))
-        fig.update_layout(title=f"Prediksi Harga {item_ml}", xaxis_title="Tanggal", yaxis_title="Harga (Rp)", hovermode="x unified")
+        
+        # Historical Data (Blue)
+        fig.add_trace(go.Scatter(
+            x=df_ml['Tanggal'], 
+            y=df_ml['Harga'], 
+            mode='lines+markers', 
+            name='Data Asli', 
+            line=dict(color='#1e3c72', width=2),
+            hovertemplate="<b>Tanggal:</b> %{x|%d %b %Y}<br><b>Harga:</b> Rp %{y:,.0f}<extra></extra>"
+        ))
+        
+        # Forecast Data (Red Dashed)
+        fig.add_trace(go.Scatter(
+            x=future_dates_real, 
+            y=pred_price, 
+            mode='lines+markers', 
+            name='Prediksi (30 Hari)', 
+            line=dict(color='#ff4b4b', dash='dash', width=2),
+            hovertemplate="<b>Tanggal:</b> %{x|%d %b %Y}<br><b>Prediksi:</b> Rp %{y:,.0f}<extra></extra>"
+        ))
+        
+        fig.update_layout(
+            title=f"Trend & Prediksi Harga: {item_ml}",
+            xaxis_title="Periode Waktu",
+            yaxis_title="Harga (Rp)",
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
         st.plotly_chart(fig, use_container_width=True)
         
-        # Insight
-        change = pred_price[-1] - df_ml['Harga'].iloc[-1]
-        pct = (change / df_ml['Harga'].iloc[-1]) * 100
-        
-        st.info(f"💡 **Automated Insight:** Harga diprediksi {'NAIK' if change > 0 else 'TURUN'} sebesar {pct:.2f}% (Rp {change:,.0f}) dalam 30 hari ke depan.")
+        # --- 3. DETAIL DATA IN EXPANDER (BOTTOM) ---
+        with st.expander("Lihat Angka Detail Prediksi"):
+            # Create readable dataframe
+            df_forecast = pd.DataFrame({
+                'Tanggal': future_dates_real,
+                'Prediksi Harga (Rp)': pred_price.astype(int)
+            })
+            
+            # Show Dataframe
+            st.dataframe(df_forecast, use_container_width=True)
+            
+            # Download Button
+            csv = df_forecast.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Download Data Prediksi (CSV)",
+                data=csv,
+                file_name='prediksi_harga_30_hari.csv',
+                mime='text/csv'
+            )
+            
     else:
         st.warning("Data internal tidak tersedia untuk prediksi.")
 
 # ==============================================================================
-# MENU 3: PETA GEOGRAFIS (REVERTED TO DOT MAP st.map)
+# MENU 3: PETA GEOGRAFIS (KEEP - NO CHANGES)
 # ==============================================================================
 elif menu == "🗺️ Peta Geografis":
     render_header()
@@ -199,9 +258,6 @@ elif menu == "🗺️ Peta Geografis":
         try:
             df = pd.read_csv(file_path)
             # STRICT REQUIREMENT: Column 1 is Province, Column 2 is Price. Column 0 is No.
-            # Using iloc to match strict index requirements regardless of header name
-            
-            # Create a clean dataframe structure
             clean_df = pd.DataFrame()
             clean_df['Provinsi'] = df.iloc[:, 1] # Index 1
             clean_df['Harga'] = df.iloc[:, 2]    # Index 2
@@ -220,31 +276,21 @@ elif menu == "🗺️ Peta Geografis":
     if not df_map.empty:
         # 2. COORDINATE MAPPING
         def get_lat_lon(prov_name):
-            # Try exact match
             safe_name = str(prov_name).strip()
             if safe_name in PROVINCE_COORDS:
                 return PROVINCE_COORDS[safe_name]
-            # Try simple fuzzy (handle DI Yogyakarta case if needed)
-            # But user provided specific keys
             return None
 
         # Apply coordinates
         coords = df_map['Provinsi'].apply(get_lat_lon)
-        
-        # Create separate Lat/Lon columns for st.map
         df_map['lat'] = coords.apply(lambda x: x[0] if x else None)
         df_map['lon'] = coords.apply(lambda x: x[1] if x else None)
-        
-        # Drop missing
         df_map = df_map.dropna(subset=['lat', 'lon'])
         
         if not df_map.empty:
             # 3. VISUALIZATION LOGIC
             avg_price = df_map['Harga'].mean()
             
-            # Color: Red if > Avg, Green if <= Avg
-            # st.map color expects [r, g, b, a] where RGB is 0-255? or 0-1?
-            # Streamlit standard: [R, G, B, A] e.g. [255, 0, 0, 255]
             def set_color(price):
                 if price > avg_price:
                     return [255, 0, 0, 200] # RED
@@ -252,13 +298,10 @@ elif menu == "🗺️ Peta Geografis":
                     return [0, 255, 0, 200] # GREEN
             
             df_map['color'] = df_map['Harga'].apply(set_color)
-            
-            # Size: constant or scaled? User said "dots are visible"
-            df_map['size'] = 50000 # Visible size for provinces
+            df_map['size'] = 50000 
             
             st.map(df_map, latitude='lat', longitude='lon', color='color', size='size')
             
-            # Stats below map
             c1, c2, c3 = st.columns(3)
             expensive = df_map.loc[df_map['Harga'].idxmax()]
             cheaper = df_map.loc[df_map['Harga'].idxmin()]
@@ -271,116 +314,119 @@ elif menu == "🗺️ Peta Geografis":
             
             with st.expander("Lihat Data Tabel"):
                 st.dataframe(df_map[['Provinsi', 'Harga']].sort_values(by='Harga', ascending=False), use_container_width=True)
-                
         else:
             st.error("Gagal mapping koordinat. Cek nama provinsi di CSV.")
     else:
         st.error("Data kosong. Pastikan file uploaded.")
 
 # ==============================================================================
-# MENU 4: SNA
+# MENU 4: SNA (UPGRADED WITH TABS & WORDCLOUD)
 # ==============================================================================
 elif menu == "🕸️ Analisis Isu (SNA)":
     render_header()
-    st.subheader("🕸️ Jejaring Topik Pemberitaan")
+    st.subheader("🕸️ Analisis Isu & Topik Berita")
     
     if not df_berita_internal.empty:
-        # 1. Text Preprocessing & Network Graph
-        text = " ".join(df_berita_internal['Title'].tolist()).lower()
-        for char in "-.,|?": text = text.replace(char, "")
-        words = text.split()
+        # Preprocessing common for both stats
+        text_str = " ".join(df_berita_internal['Title'].tolist()).lower()
+        for char in "-.,|?": text_str = text_str.replace(char, "")
+        words = text_str.split()
         
-        # Build Graph
-        G = nx.Graph()
-        for i in range(len(words)-1):
-            if len(words[i]) > 3 and len(words[i+1]) > 3:
-                if G.has_edge(words[i], words[i+1]): 
-                    G[words[i]][words[i+1]]['weight'] += 1
-                else:
-                    G.add_edge(words[i], words[i+1], weight=1)
+        # Determine stopwords and clean list
+        STOPWORDS = ["dan", "yang", "di", "ke", "untuk", "ini", "itu", "dari", "dengan", "pada", "dalam", "baca", "juga"]
+        clean_words = [w for w in words if w not in STOPWORDS and len(w) >= 4]
         
-        if len(G.nodes) > 0:
-            # Core nodes only
-            core_nodes = [n for n, d in G.degree() if d > 1]
-            G_sub = G.subgraph(core_nodes) if core_nodes else G
+        # --- TABS LAYOUT ---
+        tab_net, tab_wc = st.tabs(["🕸️ Jaringan Koneksi (Network)", "☁️ Word Cloud"])
+        
+        # --- TAB 1: NETWORK GRAPH ---
+        with tab_net:
+            # Build Graph
+            G = nx.Graph()
+            for i in range(len(words)-1):
+                if len(words[i]) > 3 and len(words[i+1]) > 3:
+                    if G.has_edge(words[i], words[i+1]): 
+                        G[words[i]][words[i+1]]['weight'] += 1
+                    else:
+                        G.add_edge(words[i], words[i+1], weight=1)
             
-            # --- PLOTLY NETWORK GRAPH ---
-            pos = nx.spring_layout(G_sub, seed=42)
-            edge_x, edge_y = [], []
-            for edge in G_sub.edges():
-                x0, y0 = pos[edge[0]]
-                x1, y1 = pos[edge[1]]
-                edge_x.extend([x0, x1, None])
-                edge_y.extend([y0, y1, None])
+            if len(G.nodes) > 0:
+                core_nodes = [n for n, d in G.degree() if d > 1]
+                G_sub = G.subgraph(core_nodes) if core_nodes else G
                 
-            edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#888'), hoverinfo='none', mode='lines')
-            
-            node_x, node_y, node_text, node_size = [], [], [], []
-            for node in G_sub.nodes():
-                x, y = pos[node]
-                node_x.append(x)
-                node_y.append(y)
-                node_text.append(f"{node} ({G_sub.degree(node)})")
-                node_size.append(G_sub.degree(node) * 5)
+                pos = nx.spring_layout(G_sub, seed=42)
+                edge_x, edge_y = [], []
+                for edge in G_sub.edges():
+                    x0, y0 = pos[edge[0]]
+                    x1, y1 = pos[edge[1]]
+                    edge_x.extend([x0, x1, None])
+                    edge_y.extend([y0, y1, None])
+                    
+                edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#888'), hoverinfo='none', mode='lines')
                 
-            node_trace = go.Scatter(
-                x=node_x, y=node_y, 
-                text=node_text, 
-                mode='markers+text', 
-                hoverinfo='text',
-                marker=dict(size=node_size, color=node_size, colorscale='Viridis', showscale=True)
-            )
-            
-            fig = go.Figure(
-                data=[edge_trace, node_trace],
-                layout=go.Layout(
-                    title="Jaringan Kata Kunci Berita",
-                    showlegend=False,
-                    hovermode='closest',
-                    margin=dict(b=0,l=0,r=0,t=40),
+                node_x, node_y, node_text, node_size = [], [], [], []
+                for node in G_sub.nodes():
+                    x, y = pos[node]
+                    node_x.append(x)
+                    node_y.append(y)
+                    node_text.append(f"{node} ({G_sub.degree(node)})")
+                    node_size.append(G_sub.degree(node) * 6)
+                    
+                node_trace = go.Scatter(
+                    x=node_x, y=node_y, 
+                    text=node_text, 
+                    mode='markers+text', 
+                    hoverinfo='text',
+                    textposition='top center',
+                    marker=dict(size=node_size, color=node_size, colorscale='Viridis', showscale=True)
+                )
+                
+                fig = go.Figure(data=[edge_trace, node_trace])
+                fig.update_layout(
+                    showlegend=False, 
+                    margin=dict(b=0,l=0,r=0,t=0), 
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
                 )
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # 2. KEYWORD FREQUENCY ANALYSIS
-            st.markdown("---")
-            st.subheader("Kata Kunci Paling Sering Muncul")
-            
-            # Stopwords Removal
-            STOPWORDS = ["dan", "yang", "di", "ke", "untuk", "ini", "itu", "dari", "dengan", "pada", "dalam"]
-            filtered_words = [w for w in words if w not in STOPWORDS and len(w) >= 4]
-            
-            # Counting
-            word_counts = Counter(filtered_words)
-            most_common = word_counts.most_common(15)
-            
-            df_freq = pd.DataFrame(most_common, columns=['Kata Kunci', 'Frekuensi'])
-            df_freq = df_freq.sort_values(by='Frekuensi', ascending=True) # Ascending for Horizontal Bar
-            
-            col_chart, col_table = st.columns([1, 1])
-            
-            with col_chart:
-                fig_bar = px.bar(
-                    df_freq, 
-                    x='Frekuensi', 
-                    y='Kata Kunci', 
-                    orientation='h',
-                    title='Top 15 Kata Kunci Popular',
-                    text='Frekuensi'
-                )
-                fig_bar.update_traces(marker_color='#2a5298', textposition='outside')
-                fig_bar.update_layout(yaxis={'categoryorder':'total ascending'})
-                st.plotly_chart(fig_bar, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Data belum cukup untuk Network Graph.")
                 
-            with col_table:
-                # Sort descending for table view
-                df_table = df_freq.sort_values(by='Frekuensi', ascending=False).reset_index(drop=True)
-                df_table.index += 1
-                st.dataframe(df_table, use_container_width=True, height=400)
+        # --- TAB 2: WORD CLOUD ---
+        with tab_wc:
+            if WORDCLOUD_AVAILABLE and len(clean_words) > 0:
+                text_clean = " ".join(clean_words)
+                wc = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(text_clean)
                 
-        else:
-            st.write("Data belum cukup untuk membentuk jaringan.")
+                # Display using Matplotlib
+                fig_wc, ax = plt.subplots(figsize=(10, 5))
+                ax.imshow(wc, interpolation='bilinear')
+                ax.axis('off')
+                st.pyplot(fig_wc)
+            elif not WORDCLOUD_AVAILABLE:
+                st.error("Visualisasi WordCloud memerlukan library 'wordcloud'.")
+            else:
+                st.info("Tidak ada kata kunci yang cukup.")
+        
+        # --- KEYWORD STATS (Common for both) ---
+        st.markdown("---")
+        st.subheader("📊 Statistik Detail Kata Kunci")
+        
+        word_counts = Counter(clean_words)
+        most_common = word_counts.most_common(15)
+        df_freq = pd.DataFrame(most_common, columns=['Kata Kunci', 'Frekuensi']).sort_values(by='Frekuensi', ascending=True)
+        
+        c_chart, c_piew = st.columns([2, 1])
+        with c_chart:
+            fig_bar = px.bar(df_freq, x='Frekuensi', y='Kata Kunci', orientation='h', title='Top 15 Keywords')
+            fig_bar.update_traces(marker_color='#2a5298')
+            st.plotly_chart(fig_bar, use_container_width=True)
+            
+        with c_piew:
+            st.write("Tabel Frekuensi:")
+            df_table = df_freq.sort_values(by='Frekuensi', ascending=False).reset_index(drop=True)
+            df_table.index += 1
+            st.dataframe(df_table, height=300, use_container_width=True)
+            
     else:
         st.warning("Data berita kosong.")
